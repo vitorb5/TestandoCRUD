@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import com.codelab.example.evosystems.Model.Funcionario
 import com.codelab.example.evosystems.Model.Person
 
 class DBHelper(context: Context):SQLiteOpenHelper(context, DATABASE_NAME, null, DATABSE_VER) {
@@ -17,14 +18,22 @@ class DBHelper(context: Context):SQLiteOpenHelper(context, DATABASE_NAME, null, 
         private val COL_DEPARTAMENTO="Name"
         private val COL_SIGLA="Email"
     }
+    //table Funcionario
+    private val TABLE_FUNCIONARIO="Funcionario"
+    private val COL_ID_FUNCIONARIO="IdFuncionario"
+    private val COL_ID_DEPARTAMENTO="IdDepartamento"
+    private val COL_NOME="Nome"
+    private val COL_RG="Rg"
 
     override fun onCreate(db: SQLiteDatabase?) {
-        val CREATE_TABLE_QUERY = ("CREATE TABLE $TABLE_EMPRESA ($COL_ID INTEGER PRIMARY KEY,$COL_DEPARTAMENTO TEXT,$COL_SIGLA TEXT)")
+        val CREATE_TABLE_QUERY =
+            ("CREATE TABLE $TABLE_EMPRESA ($COL_ID INTEGER PRIMARY KEY,$COL_DEPARTAMENTO TEXT,$COL_SIGLA TEXT)")
+        ("CREATE TABLE $TABLE_FUNCIONARIO ($COL_ID_FUNCIONARIO INTEGER PRIMARY KEY,$COL_ID_DEPARTAMENTO, INTEGER FOREIGN KEY, $COL_NOME TEXT,$COL_RG TEXT)")
         db!!.execSQL(CREATE_TABLE_QUERY)
     }
 
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
-        db!!.execSQL("DROP TABLE IF EXISTS $TABLE_EMPRESA")
+        db!!.execSQL("DROP TABLE IF EXISTS $TABLE_EMPRESA" + "$TABLE_FUNCIONARIO")
         onCreate(db)
     }
 
@@ -80,6 +89,65 @@ class DBHelper(context: Context):SQLiteOpenHelper(context, DATABASE_NAME, null, 
 
 
         db.delete(TABLE_EMPRESA,"$COL_ID=?", arrayOf(person.id.toString()))
+        db.close()
+
+    }
+
+    //CRUD
+    val allFuncionario:List<Funcionario>
+        get(){
+            val lstFuncionario = ArrayList<Funcionario>()
+            val selectQuery ="SELECT * FROM $TABLE_FUNCIONARIO"
+            val db = this.writableDatabase
+            val cursor = db.rawQuery(selectQuery,null)
+            if (cursor.moveToFirst())
+            {
+                do {
+                    val funcionario= Funcionario()
+                    funcionario.idFunc = cursor.getInt(cursor.getColumnIndex(COL_ID_FUNCIONARIO))
+                    funcionario.idDepartamento = cursor.getInt(cursor.getColumnIndex(COL_ID_DEPARTAMENTO))
+                    funcionario.nome = cursor.getString(cursor.getColumnIndex(COL_NOME))
+                    funcionario.rg = cursor.getString(cursor.getColumnIndex(COL_RG))
+
+                    lstFuncionario.add(funcionario)
+                }while(cursor.moveToNext())
+            }
+            db.close()
+            return lstFuncionario
+        }
+
+    fun addFuncionario(funcionario: Funcionario)
+    {
+        val db = this.writableDatabase
+        val values = ContentValues()
+        values.put(COL_ID_FUNCIONARIO,funcionario.idFunc)
+        values.put(COL_ID_DEPARTAMENTO,funcionario.idDepartamento)
+        values.put(COL_NOME,funcionario.nome)
+        values.put(COL_RG,funcionario.rg)
+
+        db.insert(TABLE_FUNCIONARIO, null,values)
+        db.close()
+    }
+
+    fun updatePerson(funcionario: Funcionario):Int
+    {
+        val db = this.writableDatabase
+        val values = ContentValues()
+        values.put(COL_ID_FUNCIONARIO,funcionario.idFunc)
+        values.put(COL_ID_DEPARTAMENTO,funcionario.idDepartamento)
+        values.put(COL_NOME,funcionario.nome)
+        values.put(COL_RG,funcionario.rg)
+
+        return db.update(TABLE_FUNCIONARIO, values,"$COL_ID=?", arrayOf(funcionario.idFunc.toString()))
+
+    }
+
+    fun deletePerson(funcionario: Funcionario)
+    {
+        val db = this.writableDatabase
+
+
+        db.delete(TABLE_FUNCIONARIO,"$COL_ID_FUNCIONARIO=?", arrayOf(funcionario.idFunc.toString()))
         db.close()
 
     }
